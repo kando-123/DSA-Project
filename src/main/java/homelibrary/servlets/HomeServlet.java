@@ -61,7 +61,7 @@ public class HomeServlet extends HttpServlet
                     <h2>Hello, %s!</h2>
                     <div>
                         <form action="search">
-                            <input name="search" type="text"/>
+                            <input name="search" type="text" placeholder="Search"/>
                             <input type="submit" value="Search"/>
                         </form>
                     </div>

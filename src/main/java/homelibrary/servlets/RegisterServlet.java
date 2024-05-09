@@ -43,11 +43,23 @@ public class RegisterServlet extends HttpServlet
         String password2 = request.getParameter("confirm");
 
         List<String> errorMessages = new ArrayList<>();
-        if (!isUniqueUsername(username))
+
+        boolean uniqueName = false;
+        try
         {
-            errorMessages.add("The username is already in use.");
+            uniqueName = isUniqueUsername(username);
+            if (!uniqueName)
+            {
+                errorMessages.add("The username is already in use.");
+            }
         }
-        if (!isCorrectPassword(password1))
+        catch (SQLException sql)
+        {
+            errorMessages.add(sql.getMessage());
+        }
+
+        boolean correctPassword = isCorrectPassword(password1);
+        if (!correctPassword)
         {
             errorMessages.add("""
                               The password is incorrect; the requirements are:<br>
@@ -60,17 +72,55 @@ public class RegisterServlet extends HttpServlet
                               </ul>
                               """);
         }
-        if (!password2.equals(password1))
+
+        boolean matchingPasswords = password2.equals(password1);
+        if (!matchingPasswords)
         {
             errorMessages.add("The passwords do not match.");
         }
-        if (!isUniqueEmail(email))
+
+        boolean uniqueEmail = false;
+        try
         {
-            errorMessages.add("The email is already in use.");
+            uniqueEmail = isUniqueEmail(email);
+            if (!uniqueEmail)
+            {
+                errorMessages.add("The email is already in use.");
+            }
         }
-        if (!registerUser(username, email, password1))
+        catch (SQLException sql)
         {
-            errorMessages.add("Other problem occurred.");
+            errorMessages.add(sql.getMessage());
+        }
+
+        if (uniqueName && correctPassword && matchingPasswords && uniqueEmail)
+        {
+            try
+            {
+                if (!registerUser(username, email, password1))
+                {
+                    errorMessages.add("Other problem occurred.");
+                }
+            }
+            catch (SQLException sql)
+            {
+                errorMessages.add(sql.getMessage());
+            }
+        }
+        for (int i = 0; i < errorMessages.size(); ++i)
+        {
+            int j = i + 1;
+            while (j < errorMessages.size())
+            {
+                if (errorMessages.get(i).equals(errorMessages.get(j)))
+                {
+                    errorMessages.remove(j);
+                }
+                else
+                {
+                    ++j;
+                }
+            }
         }
 
         // ---------------------------- Respond. ---------------------------- //
@@ -83,6 +133,7 @@ public class RegisterServlet extends HttpServlet
         }
         else
         {
+            response.setContentType("text/html;charset=UTF-8");
             try (PrintWriter out = response.getWriter())
             {
                 StringBuilder errorsHtml = new StringBuilder();
@@ -191,22 +242,20 @@ public class RegisterServlet extends HttpServlet
         return correct;
     }
 
-    private boolean isUniqueUsername(String username)
+    private boolean isUniqueUsername(String username) throws SQLException
     {
-        boolean success = false;
-        try
+        boolean success;
+        Driver driver = new org.postgresql.Driver();
+        DriverManager.registerDriver(driver);
+
+        String dbUrl = DatabaseConnectionData.DATABASE_URL;
+        String dbUsername = DatabaseConnectionData.DATABASE_USERNAME;
+        String dbPassword = DatabaseConnectionData.DATABASE_PASSWORD;
+
+        try (Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
+             Statement statement = connection.createStatement())
         {
-            Driver driver = new org.postgresql.Driver();
-            DriverManager.registerDriver(driver);
-
-            String dbUrl = DatabaseConnectionData.DATABASE_URL;
-            String dbUsername = DatabaseConnectionData.DATABASE_USERNAME;
-            String dbPassword = DatabaseConnectionData.DATABASE_PASSWORD;
-
-            try (Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-                 Statement statement = connection.createStatement())
-            {
-                String query = """
+            String query = """
                                SELECT
                                        *
                                FROM
@@ -214,32 +263,26 @@ public class RegisterServlet extends HttpServlet
                                WHERE
                                        u.username = '%s'
                                """.formatted(username);
-                ResultSet results = statement.executeQuery(query);
-                success = !results.next();
-            }
-        }
-        catch (SQLException sql)
-        {
+            ResultSet results = statement.executeQuery(query);
+            success = !results.next();
         }
         return success;
     }
 
-    private boolean isUniqueEmail(String email)
+    private boolean isUniqueEmail(String email) throws SQLException
     {
         boolean success = false;
-        try
+        Driver driver = new org.postgresql.Driver();
+        DriverManager.registerDriver(driver);
+
+        String dbUrl = DatabaseConnectionData.DATABASE_URL;
+        String dbUsername = DatabaseConnectionData.DATABASE_USERNAME;
+        String dbPassword = DatabaseConnectionData.DATABASE_PASSWORD;
+
+        try (Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
+             Statement statement = connection.createStatement())
         {
-            Driver driver = new org.postgresql.Driver();
-            DriverManager.registerDriver(driver);
-
-            String dbUrl = DatabaseConnectionData.DATABASE_URL;
-            String dbUsername = DatabaseConnectionData.DATABASE_USERNAME;
-            String dbPassword = DatabaseConnectionData.DATABASE_PASSWORD;
-
-            try (Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-                 Statement statement = connection.createStatement())
-            {
-                String query = """
+            String query = """
                                SELECT
                                        *
                                FROM
@@ -247,55 +290,44 @@ public class RegisterServlet extends HttpServlet
                                WHERE
                                        u.email = '%s'
                                """.formatted(email);
-                ResultSet results = statement.executeQuery(query);
-                success = !results.next();
-            }
-        }
-        catch (SQLException sql)
-        {
+            ResultSet results = statement.executeQuery(query);
+            success = !results.next();
         }
         return success;
     }
 
-    private boolean registerUser(String username, String email, String password)
+    private boolean registerUser(String username, String email, String password) throws SQLException
     {
         boolean success = false;
-        try
+        Driver driver = new org.postgresql.Driver();
+        DriverManager.registerDriver(driver);
+
+        String dbUrl = DatabaseConnectionData.DATABASE_URL;
+        String dbUsername = DatabaseConnectionData.DATABASE_USERNAME;
+        String dbPassword = DatabaseConnectionData.DATABASE_PASSWORD;
+
+        try (Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
+             Statement statement = connection.createStatement())
         {
-            Driver driver = new org.postgresql.Driver();
-            DriverManager.registerDriver(driver);
-
-            String dbUrl = DatabaseConnectionData.DATABASE_URL;
-            String dbUsername = DatabaseConnectionData.DATABASE_USERNAME;
-            String dbPassword = DatabaseConnectionData.DATABASE_PASSWORD;
-
-            try (Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-                 Statement statement = connection.createStatement())
-            {
-                String query = """
-                               INSERT INTO
-                                       app.users
-                                       (
-                                           username,
-                                           email,
-                                           password,
-                                           role
-                                       )
-                               VALUES
-                                       (
-                                           '%s',
-                                           '%s',
-                                           '%s',
-                                           'user'
-                                       )
-                               """.formatted(username, email, password);
-                int rows = statement.executeUpdate(query);
-                success = (rows == 1);
-            }
-        }
-        catch (SQLException sql)
-        {
-
+            String query = """
+                           INSERT INTO
+                                   app.users
+                                   (
+                                       username,
+                                       email,
+                                       password,
+                                       role
+                                   )
+                           VALUES
+                                   (
+                                       '%s',
+                                       '%s',
+                                       '%s',
+                                       'user'
+                                    )
+                           """.formatted(username, email, password);
+            int rows = statement.executeUpdate(query);
+            success = (rows == 1);
         }
         return success;
     }

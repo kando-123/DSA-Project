@@ -37,7 +37,16 @@ public class LoginServlet extends HttpServlet
 
         String login = request.getParameter("login");
         String password = request.getParameter("password");
-        boolean success = checkLoginData(login, password);
+        String exception = "";
+        boolean success = false;
+        try
+        {
+            success = checkLoginData(login, password);
+        }
+        catch (SQLException sql)
+        {
+            exception = String.format("<p>Cause: %s</p>", sql.getMessage());
+        }
 
         // ---------------------------- Respond. ---------------------------- //
         if (success)
@@ -68,6 +77,7 @@ public class LoginServlet extends HttpServlet
                 <body>
                     <div>
                         <h2>Log in again</h2>
+                        %s
                         <form action="login" method="post">
                             <table>
                                 <tr>
@@ -84,28 +94,26 @@ public class LoginServlet extends HttpServlet
                     </div>
                 </body>
                 </html>
-                """);
+                """.formatted(exception));
             }
         }
 
     }
 
-    private boolean checkLoginData(String login, String password)
+    private boolean checkLoginData(String login, String password) throws SQLException
     {
         boolean success = false;
-        try
+        Driver driver = new org.postgresql.Driver();
+        DriverManager.registerDriver(driver);
+
+        String dbUrl = DatabaseConnectionData.DATABASE_URL;
+        String dbUsername = DatabaseConnectionData.DATABASE_USERNAME;
+        String dbPassword = DatabaseConnectionData.DATABASE_PASSWORD;
+
+        try (Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
+             Statement statement = connection.createStatement())
         {
-            Driver driver = new org.postgresql.Driver();
-            DriverManager.registerDriver(driver);
-
-            String dbUrl = DatabaseConnectionData.DATABASE_URL;
-            String dbUsername = DatabaseConnectionData.DATABASE_USERNAME;
-            String dbPassword = DatabaseConnectionData.DATABASE_PASSWORD;
-
-            try (Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-                 Statement statement = connection.createStatement())
-            {
-                String query = """
+            String query = """
                                SELECT
                                        * 
                                FROM
@@ -115,12 +123,8 @@ public class LoginServlet extends HttpServlet
                                    AND
                                        u.password = '%s'
                                """.formatted(login, password);
-                ResultSet results = statement.executeQuery(query);
-                success = results.next();
-            }
-        }
-        catch (SQLException sql)
-        {
+            ResultSet results = statement.executeQuery(query);
+            success = results.next();
         }
         return success;
     }

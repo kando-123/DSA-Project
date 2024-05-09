@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<!--
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>Home Library &middot; Add a Publication</h1>
+        <div>
+            <form action="add" method="post">
+                <table>
+                    <tr>
+                        <th align="right">Title:</th>
+                        <td><input name="title" type="text" required/></td>
+                    </tr>
+                    <tr>
+                        <th align="right">Year of publication:</th>
+                        <td><input name="publication-date" type="text" required/></td>
+                    </tr>
+                    <tr>
+                        <th align="right">Condition:</th>
+                        <td><input name="condition" type="text" required/></td>
+                    </tr>
+                    <tr>
+                        <th align="right">Publication type:</th>
+                        <td><input name="publication-type" type="text" placeholder="book/journal" required/></td>
+                    </tr>
+                    <tr>
+                        <th align="right">ISBN/ISSN:</th>
+                        <td><input name="isbn/issn" type="text" required/></td>
+                    </tr>
+                    <tr>
+                        <th align="right">Authors:</th>
+                        <td><input name="authors" type="text" required placeholder="separate with commas, if many" size="25"/></td>
+                    </tr>
+                </table><br>
+                <input type="submit" value="Add"/>
+            </form>
+        </div>
+    </body>
+</html>
