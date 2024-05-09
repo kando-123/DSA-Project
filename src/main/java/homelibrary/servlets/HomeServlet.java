@@ -101,7 +101,7 @@ public class HomeServlet extends HttpServlet
                             </tr>
                             <tr>
                                 <td>
-                                    <form action="browse" method="post">
+                                    <form action="to-be-named" method="post">
                                         <input type="submit" value="Click"/>
                                     </form>
                                 </td>

@@ -39,6 +39,7 @@ public class BrowseServlet extends HttpServlet
         String tableHtml = getTableOfPublications(ownerId);
         
         // ---------------------------- Respond. ---------------------------- //
+        
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter())
         {
